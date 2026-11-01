@@ -1,0 +1,142 @@
+version: 2
+models:
+  - name: mart_daily_state_metrics
+    description: Дневные метрики по штатам. Одна строка соответствует дате и штату.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [transaction_date, us_state]
+    columns:
+      - name: transaction_date
+        description: Дата транзакций.
+        data_tests: [not_null]
+      - name: us_state
+        description: Штат США.
+        data_tests: [not_null]
+      - name: transaction_count
+        description: Количество транзакций за день в штате.
+      - name: total_amount
+        description: Сумма транзакций за день в штате.
+      - name: avg_amount
+        description: Средний чек за день в штате.
+      - name: p95_amount
+        description: 95-й перцентиль суммы транзакции за день в штате.
+      - name: large_transaction_share
+        description: Доля крупных транзакций с суммой от 1000 включительно, от 0 до 1.
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+  - name: mart_fraud_by_category
+    description: Анализ фрода по категориям. Одна строка соответствует категории транзакций.
+    columns:
+      - name: cat_id
+        description: Категория транзакций.
+        data_tests: [not_null, unique]
+      - name: transaction_count
+        description: Общее число транзакций в категории.
+      - name: fraud_count
+        description: Число мошеннических транзакций в категории.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в категории в процентах, от 0 до 100.
+      - name: total_amount
+        description: Общая сумма транзакций в категории.
+      - name: fraud_amount
+        description: Сумма мошеннических транзакций в категории.
+  - name: mart_fraud_by_state
+    description: Географический анализ фрода. Одна строка соответствует штату США.
+    columns:
+      - name: us_state
+        description: Штат США.
+        data_tests: [not_null, unique]
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в штате в процентах, от 0 до 100.
+      - name: unique_customers
+        description: Число уникальных сочетаний имени, фамилии, широты и долготы клиента в штате.
+      - name: unique_merchants
+        description: Число уникальных мерчантов в штате.
+      - name: total_amount
+        description: Общая сумма транзакций в штате.
+      - name: fraud_amount
+        description: Сумма мошеннических транзакций в штате.
+  - name: mart_customer_risk_profile
+    description: Профиль риска клиентов. Клиент определяется сочетанием имени, фамилии, широты и долготы.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [name_1, name_2, lat, lon]
+    columns:
+      - name: name_1
+        description: Имя клиента.
+        data_tests: [not_null]
+      - name: name_2
+        description: Фамилия клиента.
+        data_tests: [not_null]
+      - name: lat
+        description: Широта клиента.
+        data_tests: [not_null]
+      - name: lon
+        description: Долгота клиента.
+        data_tests: [not_null]
+      - name: transaction_count
+        description: Количество транзакций клиента за всю доступную историю.
+      - name: fraud_count
+        description: Количество мошеннических транзакций клиента.
+      - name: first_transaction_time
+        description: Время первой транзакции клиента.
+      - name: last_transaction_time
+        description: Время последней транзакции клиента.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций клиента в процентах, от 0 до 100.
+      - name: avg_amount
+        description: Средний чек клиента.
+      - name: risk_level
+        description: 'Уровень риска по fraud_rate: HIGH - от 1%, MEDIUM - от 0,5% до 1%, LOW - ниже 0,5%. Верхняя граница MEDIUM не включается.'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HIGH', 'MEDIUM', 'LOW']
+  - name: mart_hourly_fraud_pattern
+    description: Временные паттерны фрода. Одна строка соответствует сочетанию дня недели и часа.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [day_of_week, transaction_hour]
+    columns:
+      - name: day_of_week
+        description: День недели от 1 (понедельник) до 7 (воскресенье).
+        data_tests: [not_null]
+      - name: transaction_hour
+        description: Час транзакции от 0 до 23.
+        data_tests: [not_null]
+      - name: transaction_count
+        description: Количество транзакций в данном сочетании дня недели и часа.
+      - name: fraud_count
+        description: Количество мошеннических транзакций в данном сочетании дня недели и часа.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в данном сочетании дня недели и часа в процентах.
+      - name: is_high_risk
+        description: Признак повышенного риска (1 - fraud_rate окна выше fraud_rate по всем транзакциям, 0 - не выше).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+  - name: mart_merchant_analytics
+    description: Аналитика по мерчантам. Одна строка соответствует мерчанту.
+    columns:
+      - name: merch
+        description: Мерчант.
+        data_tests: [not_null, unique]
+      - name: total_amount
+        description: Оборот мерчанта за всю доступную историю.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций мерчанта в процентах.
+      - name: is_suspicious
+        description: Флаг подозрительности (1 - fraud_rate мерчанта выше fraud_rate по всем транзакциям, 0 - не выше).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false

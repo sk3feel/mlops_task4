@@ -1,0 +1,45 @@
+version: 2
+sources:
+  - name: raw
+    schema: transactions_db
+    description: Исходные данные из домашнего задания по ClickHouse.
+    tables:
+      - name: transactions
+        description: Транзакции клиентов с признаком фрода, загруженные из CSV через Kafka.
+        columns:
+          - name: transaction_time
+            description: Время транзакции.
+          - name: merch
+            description: Мерчант.
+          - name: cat_id
+            description: Категория транзакции.
+          - name: amount
+            description: Сумма транзакции.
+          - name: name_1
+            description: Имя клиента.
+          - name: name_2
+            description: Фамилия клиента.
+          - name: gender
+            description: Пол клиента (M/F).
+          - name: street
+            description: Улица проживания клиента.
+          - name: one_city
+            description: Город проживания клиента.
+          - name: us_state
+            description: Штат США.
+          - name: post_code
+            description: Почтовый индекс клиента.
+          - name: lat
+            description: Широта клиента.
+          - name: lon
+            description: Долгота клиента.
+          - name: population_city
+            description: Численность населения города клиента.
+          - name: jobs
+            description: Профессия клиента.
+          - name: merchant_lat
+            description: Широта мерчанта.
+          - name: merchant_lon
+            description: Долгота мерчанта.
+          - name: target
+            description: Признак фрода (0 - обычная транзакция, 1 - мошенническая).

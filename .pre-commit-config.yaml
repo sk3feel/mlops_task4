@@ -1,0 +1,14 @@
+files: ^dbt/(models|tests)/.*\.sql$
+repos:
+  - repo: local
+    hooks:
+      - id: sqlfluff-fix
+        name: sqlfluff-fix
+        entry: docker compose -p hw4 -f solution/docker-compose.yml run --rm -T --entrypoint sqlfluff dbt fix .
+        language: system
+        pass_filenames: false
+      - id: sqlfluff-lint
+        name: sqlfluff-lint
+        entry: docker compose -p hw4 -f solution/docker-compose.yml run --rm -T --entrypoint sqlfluff dbt lint .
+        language: system
+        pass_filenames: false

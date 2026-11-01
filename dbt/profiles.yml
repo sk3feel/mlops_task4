@@ -1,0 +1,11 @@
+fraud_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      schema: transactions_db
+      host: clickhouse
+      port: 8123
+      user: dbt
+      password: dbt
+      threads: 1

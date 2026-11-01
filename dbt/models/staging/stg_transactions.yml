@@ -1,0 +1,65 @@
+version: 2
+models:
+  - name: stg_transactions
+    description: Очищенные и нормализованные транзакции для аналитических витрин.
+    columns:
+      - name: transaction_time
+        description: Время транзакции в формате DateTime.
+        data_tests: [not_null]
+      - name: merch
+        description: Мерчант без пробелов по краям строки.
+      - name: cat_id
+        description: Категория транзакции.
+      - name: amount
+        description: Сумма транзакции в формате Float64.
+        data_tests: [not_null]
+      - name: name_1
+        description: Имя клиента.
+      - name: name_2
+        description: Фамилия клиента.
+      - name: gender
+        description: Пол клиента в верхнем регистре (M/F).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: street
+        description: Улица проживания клиента.
+      - name: one_city
+        description: Город проживания клиента.
+      - name: us_state
+        description: Штат США в верхнем регистре.
+      - name: post_code
+        description: Почтовый индекс клиента в строковом формате.
+      - name: lat
+        description: Широта клиента.
+      - name: lon
+        description: Долгота клиента.
+      - name: population_city
+        description: Численность населения города клиента.
+      - name: jobs
+        description: Профессия клиента.
+      - name: merchant_lat
+        description: Широта мерчанта.
+      - name: merchant_lon
+        description: Долгота мерчанта.
+      - name: target
+        description: Признак фрода в формате UInt8 (0 - обычная транзакция, 1 - мошенническая).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: transaction_date
+        description: Дата транзакции для дневных метрик.
+      - name: transaction_hour
+        description: Час транзакции от 0 до 23 для анализа временных паттернов фрода.
+      - name: day_of_week
+        description: День недели от 1 (понедельник) до 7 (воскресенье).
+      - name: amount_bucket
+        description: 'Сегмент суммы: LOW - меньше 100, MEDIUM - от 100 до 1000, HIGH - от 1000. Верхняя граница MEDIUM не включается.'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['LOW', 'MEDIUM', 'HIGH']

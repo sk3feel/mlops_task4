@@ -1,0 +1,43 @@
+unit_tests:
+  - name: test_customer_risk_boundaries
+    description: Проверка уровней риска при fraud_rate 0%, 0,5% и 1%.
+    model: mart_customer_risk_profile
+    given:
+      - input: ref('stg_transactions')
+        format: sql
+        rows: |
+          with customers as (
+              select 'Alex' as name_1, 0 as frauds
+              union all
+              select 'Bob', 1
+              union all
+              select 'Sam', 2
+          )
+          select
+              name_1,
+              'Test' as name_2,
+              40.0 as lat,
+              -70.0 as lon,
+              toDateTime('2020-01-01 00:00:00') as transaction_time,
+              100.0 as amount,
+              toUInt8(number < frauds) as target
+          from customers
+          cross join numbers(200) as transactions
+    expect:
+      rows:
+        - {name_1: Alex, transaction_count: 200, fraud_count: 0, fraud_rate: 0, avg_amount: 100, risk_level: LOW}
+        - {name_1: Bob, transaction_count: 200, fraud_count: 1, fraud_rate: 0.5, avg_amount: 100, risk_level: MEDIUM}
+        - {name_1: Sam, transaction_count: 200, fraud_count: 2, fraud_rate: 1, avg_amount: 100, risk_level: HIGH}
+  - name: test_customer_identity
+    description: Клиенты с одинаковыми именами и разными координатами учитываются отдельно.
+    model: mart_customer_risk_profile
+    given:
+      - input: ref('stg_transactions')
+        rows:
+          - {name_1: Alex, name_2: Smith, lat: 40.0, lon: -70.0, transaction_time: '2020-01-01 10:00:00', amount: 100, target: 0}
+          - {name_1: Alex, name_2: Smith, lat: 40.0, lon: -70.0, transaction_time: '2020-01-01 11:00:00', amount: 300, target: 1}
+          - {name_1: Alex, name_2: Smith, lat: 41.0, lon: -71.0, transaction_time: '2020-01-01 12:00:00', amount: 50, target: 0}
+    expect:
+      rows:
+        - {lat: 40.0, lon: -70.0, transaction_count: 2, fraud_count: 1, fraud_rate: 50, avg_amount: 200, risk_level: HIGH}
+        - {lat: 41.0, lon: -71.0, transaction_count: 1, fraud_count: 0, fraud_rate: 0, avg_amount: 50, risk_level: LOW}
